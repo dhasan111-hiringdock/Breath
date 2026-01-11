@@ -3,6 +3,10 @@ import { X, Volume2, VolumeX, Settings } from 'lucide-react';
 import { BreathingMode } from '@/react-app/pages/Home';
 import { BreathParameters } from '@/shared/types';
 import EnhancedBreathingOrb from '@/react-app/components/EnhancedBreathingOrb';
+import WaveBreathingVisualizer from '@/react-app/components/WaveBreathingVisualizer';
+import BarsBreathingVisualizer from '@/react-app/components/BarsBreathingVisualizer';
+import KaleidoscopeBreathingVisualizer from '@/react-app/components/KaleidoscopeBreathingVisualizer';
+import LissajousBreathingVisualizer from '@/react-app/components/LissajousBreathingVisualizer';
 import { useBreathingAudio } from '@/react-app/hooks/useBreathingAudio';
 import { useVoiceAssistant } from '@/react-app/hooks/useVoiceAssistant';
 
@@ -27,6 +31,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
   const [isPaused, setIsPaused] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [visualizer, setVisualizer] = useState<'orb' | 'wave' | 'bars' | 'kaleidoscope' | 'lissajous'>('orb');
   const [warmup, setWarmup] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<{ inhale?: number; exhale?: number; pause?: number }>({});
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
@@ -375,13 +380,47 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
       <div 
         className="flex-1 flex items-center justify-center w-full relative"
       >
-        <EnhancedBreathingOrb
-          phase={currentPhase.phase}
-          progress={phaseProgress / currentPhase.duration}
-          mode={mode}
-          isActive={isActive && !isPaused}
-          onInteraction={handleOrbClick}
-        />
+        {visualizer === 'orb' ? (
+          <EnhancedBreathingOrb
+            phase={currentPhase.phase}
+            progress={phaseProgress / currentPhase.duration}
+            mode={mode}
+            isActive={isActive && !isPaused}
+            onInteraction={handleOrbClick}
+          />
+        ) : visualizer === 'wave' ? (
+          <WaveBreathingVisualizer
+            phase={currentPhase.phase}
+            progress={phaseProgress / currentPhase.duration}
+            mode={mode}
+            isActive={isActive && !isPaused}
+            onInteraction={handleOrbClick}
+          />
+        ) : visualizer === 'bars' ? (
+          <BarsBreathingVisualizer
+            phase={currentPhase.phase}
+            progress={phaseProgress / currentPhase.duration}
+            mode={mode}
+            isActive={isActive && !isPaused}
+            onInteraction={handleOrbClick}
+          />
+        ) : visualizer === 'kaleidoscope' ? (
+          <KaleidoscopeBreathingVisualizer
+            phase={currentPhase.phase}
+            progress={phaseProgress / currentPhase.duration}
+            mode={mode}
+            isActive={isActive && !isPaused}
+            onInteraction={handleOrbClick}
+          />
+        ) : (
+          <LissajousBreathingVisualizer
+            phase={currentPhase.phase}
+            progress={phaseProgress / currentPhase.duration}
+            mode={mode}
+            isActive={isActive && !isPaused}
+            onInteraction={handleOrbClick}
+          />
+        )}
         
         {/* Ripple effects */}
         {ripples.map(ripple => (
@@ -446,6 +485,29 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
       {/* Settings panel */}
       {showSettings && !isSilentMode && (
         <div className="absolute top-20 right-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-64">
+          <p className="text-white/80 text-sm mb-3">Visualizer</p>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <button
+              className={`text-xs px-2 py-1 rounded-lg border ${visualizer === 'orb' ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/20 text-white/70'}`}
+              onClick={() => setVisualizer('orb')}
+            >Orb</button>
+            <button
+              className={`text-xs px-2 py-1 rounded-lg border ${visualizer === 'wave' ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/20 text-white/70'}`}
+              onClick={() => setVisualizer('wave')}
+            >Wave</button>
+            <button
+              className={`text-xs px-2 py-1 rounded-lg border ${visualizer === 'bars' ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/20 text-white/70'}`}
+              onClick={() => setVisualizer('bars')}
+            >Bars</button>
+            <button
+              className={`text-xs px-2 py-1 rounded-lg border ${visualizer === 'kaleidoscope' ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/20 text-white/70'}`}
+              onClick={() => setVisualizer('kaleidoscope')}
+            >Kaleidoscope</button>
+            <button
+              className={`text-xs px-2 py-1 rounded-lg border ${visualizer === 'lissajous' ? 'bg-white/15 border-white/30 text-white' : 'bg-white/5 border-white/20 text-white/70'}`}
+              onClick={() => setVisualizer('lissajous')}
+            >Lissajous</button>
+          </div>
           <p className="text-white/80 text-sm mb-3">Adjust timings</p>
           <div className="space-y-3">
             <div>
