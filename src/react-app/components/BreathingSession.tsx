@@ -9,6 +9,7 @@ import KaleidoscopeBreathingVisualizer from '@/react-app/components/Kaleidoscope
 import LissajousBreathingVisualizer from '@/react-app/components/LissajousBreathingVisualizer';
 import { useBreathingAudio } from '@/react-app/hooks/useBreathingAudio';
 import { useVoiceAssistant } from '@/react-app/hooks/useVoiceAssistant';
+import { getBreathParameters, createBreathingSession, markSessionComplete } from '@/shared/localStore';
 
 interface BreathingSessionProps {
   mode: BreathingMode;
@@ -48,7 +49,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
   const hasSpokenBeginRef = useRef(false);
   const stopAmbientSoundRef = useRef(stopAmbientSound);
   const cancelVoiceRef = useRef(cancelVoice);
-  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+  // Local-only persistence, no backend required
 
   useEffect(() => {
     stopAmbientSoundRef.current = stopAmbientSound;
@@ -72,17 +73,12 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
     let retryCount = 0;
     const maxRetries = 3;
 
-    // Fetch breathing parameters and create session
+    // Load breathing parameters and create session locally
     const initSession = async () => {
       if (initOnceRef.current) return;
       initOnceRef.current = true;
       try {
-        const paramsRes = await fetch(`${apiBase}/api/breathing/parameters/${mode}`, {
-          credentials: 'include'
-        });
-        if (!paramsRes.ok) throw new Error('Failed to fetch parameters');
-        
-        const params = await paramsRes.json();
+        const params = await getBreathParameters(mode);
         
         // Apply custom duration if provided
         if (customDuration) {
@@ -91,16 +87,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
         
         setParameters(params);
 
-        const sessionRes = await fetch(`${apiBase}/api/breathing/sessions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ mode, custom_duration: customDuration })
-        });
-        
-        if (!sessionRes.ok) throw new Error('Failed to create session');
-        
-        const session = await sessionRes.json();
+        const session = await createBreathingSession(mode, customDuration);
         sessionIdRef.current = session.id;
         
         setWarmup(3);
@@ -122,14 +109,14 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
           setTimeout(() => initSession(), 1000 * retryCount);
         } else {
           // Failed after retries - show error and go back
-          alert('Unable to start session. Please check your connection and try again.');
+          alert('Unable to start session. Please refresh and try again.');
           onCancel();
         }
       }
     };
 
     initSession();
-  }, [mode, customDuration, onCancel, apiBase]);
+  }, [mode, customDuration, onCancel]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -159,26 +146,12 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
     }
     
     if (sessionIdRef.current) {
-      try {
-        const response = await fetch(`${apiBase}/api/breathing/sessions/${sessionIdRef.current}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-           credentials: 'include',
-          body: JSON.stringify({ completed: true })
-        });
-        if (!response.ok) {
-          throw new Error('Failed to mark session complete');
-        }
-        setTimeout(() => {
-          onComplete(sessionIdRef.current!);
-        }, 800);
-      } catch {
-        setTimeout(() => {
-          onComplete(sessionIdRef.current!);
-        }, 800);
-      }
+      await markSessionComplete(sessionIdRef.current);
+      setTimeout(() => {
+        onComplete(sessionIdRef.current!);
+      }, 800);
     }
-  }, [stopAmbientSound, soundEnabled, playCompletionSound, onComplete, cancelVoice, mode, apiBase]);
+  }, [stopAmbientSound, soundEnabled, playCompletionSound, onComplete, cancelVoice, mode]);
 
   useEffect(() => {
     if (!isActive || !parameters || isPaused) return;

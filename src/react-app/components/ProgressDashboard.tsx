@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, TrendingUp, Award, Target, Flame, Brain, Wind } from 'lucide-react';
+import { getProgressAnalytics } from '@/shared/localStore';
 
 interface ProgressDashboardProps {
   onClose: () => void;
@@ -27,26 +28,16 @@ export default function ProgressDashboard({ onClose }: ProgressDashboardProps) {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [recentMetrics, setRecentMetrics] = useState<LungMetric[]>([]);
   const [loading, setLoading] = useState(true);
-  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch(`${apiBase}/api/progress/analytics`, {
-          credentials: 'include'
-        });
-        
-        if (!res.ok) {
-          throw new Error('Failed to fetch analytics');
-        }
-        
-        const data = await res.json();
-        setAnalytics(data.analytics);
-        setRecentMetrics(data.recentMetrics);
+        const { analytics, recentMetrics } = await getProgressAnalytics();
+        setAnalytics(analytics);
+        setRecentMetrics(recentMetrics);
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
-        // Set empty analytics on error
         setAnalytics({
           baseline_lung_capacity: 0,
           current_lung_capacity: 0,
@@ -62,7 +53,7 @@ export default function ProgressDashboard({ onClose }: ProgressDashboardProps) {
     };
 
     fetchAnalytics();
-  }, [apiBase]);
+  }, []);
 
   const getDifficultyColor = (level: string) => {
     const colors = {

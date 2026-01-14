@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, TrendingUp, Calendar, Clock } from 'lucide-react';
 import { BreathingMode } from '@/react-app/pages/Home';
+import { getSessions } from '@/shared/localStore';
 
 interface SessionHistoryProps {
   onClose: () => void;
@@ -26,20 +27,12 @@ export default function SessionHistory({ onClose }: SessionHistoryProps) {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
+  // Local-only persistence
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch(`${apiBase}/api/breathing/sessions?limit=50`, {
-          credentials: 'include'
-        });
-        
-        if (!res.ok) {
-          throw new Error('Failed to fetch session history');
-        }
-        
-        const data = await res.json();
+        const data = await getSessions(50);
         setSessions(data);
         
         // Calculate stats
@@ -97,7 +90,7 @@ export default function SessionHistory({ onClose }: SessionHistoryProps) {
     };
 
     fetchHistory();
-  }, [apiBase]);
+  }, []);
 
   const getModeColor = (mode: string) => {
     const colors = {
