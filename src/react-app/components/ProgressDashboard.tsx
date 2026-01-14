@@ -27,11 +27,14 @@ export default function ProgressDashboard({ onClose }: ProgressDashboardProps) {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [recentMetrics, setRecentMetrics] = useState<LungMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch('/api/progress/analytics');
+        const res = await fetch(`${apiBase}/api/progress/analytics`, {
+          credentials: 'include'
+        });
         
         if (!res.ok) {
           throw new Error('Failed to fetch analytics');
@@ -59,7 +62,7 @@ export default function ProgressDashboard({ onClose }: ProgressDashboardProps) {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [apiBase]);
 
   const getDifficultyColor = (level: string) => {
     const colors = {

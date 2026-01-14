@@ -26,11 +26,14 @@ export default function SessionHistory({ onClose }: SessionHistoryProps) {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await fetch('/api/breathing/sessions?limit=50');
+        const res = await fetch(`${apiBase}/api/breathing/sessions?limit=50`, {
+          credentials: 'include'
+        });
         
         if (!res.ok) {
           throw new Error('Failed to fetch session history');
@@ -94,7 +97,7 @@ export default function SessionHistory({ onClose }: SessionHistoryProps) {
     };
 
     fetchHistory();
-  }, []);
+  }, [apiBase]);
 
   const getModeColor = (mode: string) => {
     const colors = {

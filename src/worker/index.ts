@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { cors } from "hono/cors";
 import {
   exchangeCodeForSessionToken,
   getOAuthRedirectUrl,
@@ -27,6 +28,13 @@ type Bindings = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use("*", cors({
+  origin: (origin) => origin ?? "*",
+  credentials: true,
+  allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization"],
+}));
 
 // Auth endpoints
 app.get("/api/oauth/google/redirect_url", async (c) => {

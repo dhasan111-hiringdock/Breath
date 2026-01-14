@@ -13,6 +13,7 @@ export default function PostSession({ sessionId, onComplete }: PostSessionProps)
   const [selectedRating, setSelectedRating] = useState<ComfortRating | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
   const handleRating = async (rating: ComfortRating) => {
     setSelectedRating(rating);
@@ -20,9 +21,10 @@ export default function PostSession({ sessionId, onComplete }: PostSessionProps)
     setError(null);
 
     try {
-      const response = await fetch(`/api/breathing/sessions/${sessionId}`, {
+      const response = await fetch(`${apiBase}/api/breathing/sessions/${sessionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ comfort_rating: rating })
       });
 

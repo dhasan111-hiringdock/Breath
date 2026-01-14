@@ -48,6 +48,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
   const hasSpokenBeginRef = useRef(false);
   const stopAmbientSoundRef = useRef(stopAmbientSound);
   const cancelVoiceRef = useRef(cancelVoice);
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') || '';
 
   useEffect(() => {
     stopAmbientSoundRef.current = stopAmbientSound;
@@ -76,7 +77,9 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
       if (initOnceRef.current) return;
       initOnceRef.current = true;
       try {
-        const paramsRes = await fetch(`/api/breathing/parameters/${mode}`);
+        const paramsRes = await fetch(`${apiBase}/api/breathing/parameters/${mode}`, {
+          credentials: 'include'
+        });
         if (!paramsRes.ok) throw new Error('Failed to fetch parameters');
         
         const params = await paramsRes.json();
@@ -88,9 +91,10 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
         
         setParameters(params);
 
-        const sessionRes = await fetch('/api/breathing/sessions', {
+        const sessionRes = await fetch(`${apiBase}/api/breathing/sessions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ mode, custom_duration: customDuration })
         });
         
@@ -125,7 +129,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
     };
 
     initSession();
-  }, [mode, customDuration, onCancel]);
+  }, [mode, customDuration, onCancel, apiBase]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -156,9 +160,10 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
     
     if (sessionIdRef.current) {
       try {
-        const response = await fetch(`/api/breathing/sessions/${sessionIdRef.current}`, {
+        const response = await fetch(`${apiBase}/api/breathing/sessions/${sessionIdRef.current}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
+           credentials: 'include',
           body: JSON.stringify({ completed: true })
         });
         if (!response.ok) {
@@ -173,7 +178,7 @@ export default function BreathingSession({ mode, customDuration, onComplete, onC
         }, 800);
       }
     }
-  }, [stopAmbientSound, soundEnabled, playCompletionSound, onComplete, cancelVoice, mode]);
+  }, [stopAmbientSound, soundEnabled, playCompletionSound, onComplete, cancelVoice, mode, apiBase]);
 
   useEffect(() => {
     if (!isActive || !parameters || isPaused) return;
